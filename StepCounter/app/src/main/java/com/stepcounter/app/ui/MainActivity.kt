@@ -14,9 +14,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.stepcounter.app.service.StepCounterService
 import com.stepcounter.app.ui.theme.StepCounterTheme
+import com.stepcounter.app.worker.MotivationNotificationWorker
 import dagger.hilt.android.AndroidEntryPoint
+import java.util.concurrent.TimeUnit
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -26,6 +31,7 @@ class MainActivity : ComponentActivity() {
     ) { grants ->
         if (grants.values.all { it }) {
             StepCounterService.start(this)
+            scheduleMotivationNotifications()
         }
     }
 
@@ -71,8 +77,28 @@ class MainActivity : ComponentActivity() {
 
         if (required.isEmpty()) {
             StepCounterService.start(this)
+            scheduleMotivationNotifications()
         } else {
             permissionLauncher.launch(required)
         }
+    }
+    
+    /**
+     * Планирует периодические мотивационные уведомления каждые 10 минут.
+     */
+    private fun scheduleMotivationNotifications() {
+        val workRequest = PeriodicWorkRequestBuilder<MotivationNotificationWorker>(
+            10, TimeUnit.MINUTES
+        ).build()
+        
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            MOTIVATION_WORK_NAME,
+            ExistingPeriodicWorkPolicy.KEEP,
+            workRequest
+        )
+    }
+    
+    companion object {
+        private const val MOTIVATION_WORK_NAME = "motivation_notification_work"
     }
 }
