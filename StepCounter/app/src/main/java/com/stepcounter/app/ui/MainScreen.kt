@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ShowChart
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -116,7 +117,7 @@ fun MainScreen(
                     ) {
                         IconButton(onClick = { viewModel.adjustGoal(-500) }) {
                             Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
+                                Icons.Filled.ArrowBack,
                                 contentDescription = stringResource(R.string.goal_decrease),
                                 modifier = Modifier.size(24.dp),
                             )
