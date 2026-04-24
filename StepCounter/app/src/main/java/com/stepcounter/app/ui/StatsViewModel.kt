@@ -13,22 +13,46 @@ import java.time.format.TextStyle
 import java.util.Locale
 import javax.inject.Inject
 
-data class DayBar(val shortLabel: String, val steps: Int)
+/**
+ * Данные для отображения одного дня в истории.
+ * [shortLabel] — короткое название дня (например, "Пн").
+ * [steps] — количество шагов.
+ * [goal] — цель на этот день.
+ * [progress] — процент выполнения цели (0.0..1.0).
+ * [isGoalReached] — достигнута ли цель.
+ */
+data class DayHistoryItem(
+    val shortLabel: String,
+    val steps: Int,
+    val goal: Int,
+    val progress: Float,
+    val isGoalReached: Boolean,
+)
 
 @HiltViewModel
 class StatsViewModel @Inject constructor(
     repository: StepsRepository,
 ) : ViewModel() {
 
-    val lastSevenDays: StateFlow<List<DayBar>> = repository.observeLastSevenDays()
+    val lastSevenDays: StateFlow<List<DayHistoryItem>> = repository.observeLastSevenDays()
         .map { entities ->
             val today = LocalDate.now()
             val byDay = entities.associateBy { it.dateEpochDay }
             (0..6).map { index ->
                 val date = today.minusDays(6L - index)
                 val shortLabel = date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())
-                val steps = byDay[date.toEpochDay()]?.stepCount ?: 0
-                DayBar(shortLabel = shortLabel, steps = steps)
+                val entity = byDay[date.toEpochDay()]
+                val steps = entity?.stepCount ?: 0
+                val goal = entity?.goalSteps ?: 1000
+                val progress = (steps.toFloat() / goal.coerceAtLeast(1).toFloat()).coerceIn(0f, 1f)
+                val isGoalReached = steps >= goal
+                DayHistoryItem(
+                    shortLabel = shortLabel,
+                    steps = steps,
+                    goal = goal,
+                    progress = progress,
+                    isGoalReached = isGoalReached,
+                )
             }
         }
         .stateIn(

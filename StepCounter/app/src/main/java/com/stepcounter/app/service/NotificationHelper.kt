@@ -20,6 +20,15 @@ class NotificationHelper @Inject constructor(
 ) {
     private val manager =
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    
+    // Массив мотивационных сообщений
+    private val motivationMessages = listOf(
+        "Начни шагать!",
+        "Пошли разомнемся!",
+        "Еще немного — и цель близка!",
+        "Шаг за шагом к рекорду!",
+        "Вставай и двигайся!"
+    )
 
     fun ensureChannels() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
@@ -33,10 +42,18 @@ class NotificationHelper @Inject constructor(
         val goalChannel = NotificationChannel(
             CHANNEL_GOAL,
             context.getString(R.string.goal_reached_title),
-            NotificationManager.IMPORTANCE_DEFAULT,
+            NotificationManager.IMPORTANCE_HIGH,
         )
+        val motivationChannel = NotificationChannel(
+            CHANNEL_MOTIVATION,
+            context.getString(R.string.motivation_channel_name),
+            NotificationManager.IMPORTANCE_DEFAULT,
+        ).apply {
+            description = context.getString(R.string.motivation_channel_desc)
+        }
         manager.createNotificationChannel(stepsChannel)
         manager.createNotificationChannel(goalChannel)
+        manager.createNotificationChannel(motivationChannel)
     }
 
     fun buildForegroundNotification(): Notification {
@@ -73,11 +90,35 @@ class NotificationHelper @Inject constructor(
             .build()
         manager.notify(GOAL_NOTIFICATION_ID, notification)
     }
+    
+    /**
+     * Показывает мотивационное уведомление со случайным текстом.
+     */
+    fun showMotivationNotification() {
+        ensureChannels()
+        val randomMessage = motivationMessages.random()
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            2,
+            Intent(context, MainActivity::class.java),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+        val notification = NotificationCompat.Builder(context, CHANNEL_MOTIVATION)
+            .setContentTitle(context.getString(R.string.app_name))
+            .setContentText(randomMessage)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .build()
+        manager.notify(MOTIVATION_NOTIFICATION_ID, notification)
+    }
 
     companion object {
         const val CHANNEL_STEPS = "steps_foreground"
         const val CHANNEL_GOAL = "steps_goal"
+        const val CHANNEL_MOTIVATION = "steps_motivation"
         const val FOREGROUND_NOTIFICATION_ID = 42
         const val GOAL_NOTIFICATION_ID = 43
+        const val MOTIVATION_NOTIFICATION_ID = 44
     }
 }

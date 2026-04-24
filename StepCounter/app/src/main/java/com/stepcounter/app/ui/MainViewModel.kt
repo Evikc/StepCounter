@@ -57,4 +57,24 @@ class MainViewModel @Inject constructor(
                 }
         }
     }
+    
+    /**
+     * Увеличивает цель на [delta] шагов.
+     */
+    fun adjustGoal(delta: Int) {
+        viewModelScope.launch {
+            val currentGoal = repository.getDailyGoal()
+            val newGoal = (currentGoal + delta).coerceAtLeast(100)
+            repository.setDailyGoal(newGoal)
+        }
+    }
+    
+    /**
+     * Устанавливает конкретное значение цели.
+     */
+    fun setGoal(value: Int) {
+        viewModelScope.launch {
+            repository.setDailyGoal(value.coerceAtLeast(100))
+        }
+    }
 }
